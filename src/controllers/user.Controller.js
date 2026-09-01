@@ -101,6 +101,13 @@ export async function deleteAvatar(req, res) {
 
 export async function deleteBanner(req, res) {
   try {
+       const userId = req.user._id
+    const user = await userModel.findById(userId);
+    if(!user){
+        return res.status(400).json({message:"user not find"})
+    }
+    user.banner = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3_KouyVrkle-kaYdW1vNwQkobqMCOPtdfpq__gFaQdW7EWMpPGHV5zFs&s=10"
+    await user.save();
     return res.status(200).json({ message: "Banner deleted successfully" });
   } catch (error) {
     console.log(error);
