@@ -116,10 +116,15 @@ export async function deleteBanner(req, res) {
 }
 
 export async function deactivateAccount(req, res) {
-  try {
-    return res
-      .status(200)
-      .json({ message: "Account deactivated successfully" });
+  try { 
+    const userId = req.user._id
+    const user = await userModel.findById(userId)
+    if(!user){
+        return res.status(400).json({message:"User not find"})
+    }
+    user.isActive = false,
+    await user.save();
+    return res.status(200).json({ message: "Account deactivated successfully" , isActive:user.isActive });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal server error" });
@@ -128,6 +133,13 @@ export async function deactivateAccount(req, res) {
 
 export async function deleteAccount(req, res) {
   try {
+    const userId = req.user._id;
+    const user = await userModel.findById(userId);
+    if(!user){
+        return res.status(400).json({message:"user not find"})
+    }
+  
+    await userModel.deleteOne(user._id)
     return res.status(200).json({ message: "Account deleted successfully" });
   } catch (error) {
     console.log(error);
