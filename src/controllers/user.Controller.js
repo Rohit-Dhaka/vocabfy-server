@@ -1,4 +1,6 @@
+import cloudinary from "../config/cloudinary.js";
 import userModel from "../models/User.model.js";
+import fs from 'fs/promises'
 
 export async function getUser(req, res) {
   try {
@@ -38,7 +40,21 @@ export async function updateUser(req, res) {
 
 export async function updateAvatar(req, res) {
   try {
-    return res.status(200).json({ message: "Avatar updated successfully" });
+    const file = req.file    
+     if (!file) {
+      return res.status(400).json({ message: "Avatar file is required" });
+    }
+    const userId = req.user._id;
+    const user = await userModel.findById(userId)
+    if(!user){
+        return res.status(400).json({message:"user not find"})
+    }
+    console.log("user",user)
+    const resulte = await cloudinary.uploader.upload(file.path)
+    fs.unlink(file.path)
+    user.avatar = resulte.secure_url    
+    await user.save();
+    return res.status(200).json({ message: "Avatar updated successfully" , avatar: user.avatar});
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal server error" });
