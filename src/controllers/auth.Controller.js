@@ -1,9 +1,29 @@
 import userModel from "../models/User.model.js";
+import bcrypt from 'bcrypt'
+import { getHtmlEmailVerify, getOtp } from "../utils/otp.utils.js";
+import crypto  from 'crypto'
+import otpModel from "../models/Otp.model.js";
+import sendEmail from "../utils/email.utils.js";
 
 
 export async function register(req, res) {
   try {
-    return res.status(201).json({message: "User registered successfully"});
+    const {name,email,password} = req.body;
+    if(!name || !email || !password){
+        return res.status(400).json({message:"All fields are required"})
+    }
+    const isExists = await userModel.findOne({email});
+    if(isExists){
+        return res.status(400).json({message:"User already exists"})
+    }
+    const otp = getOtp();
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex')
+    const hashPassword = await bcrypt.hash(password , 10)
+    const user = await userModel.create({name,email,password:hashPassword})
+    await otpModel.create({user:user.id,otpHash, email , type:"verify-email"})
+    const html = getHtmlEmailVerify(otp,name);
+    await sendEmail({email , subject:"Your Verification code", text:`Your otp is ${otp}`,html})
+    return res.status(201).json({message: "User registered successfully",user:{name:user.name,email:user.email}});
   } catch (error) {
     console.log(error);
     return res.status(500).json({error: "Internal server error"});
