@@ -63,7 +63,20 @@ export async function updateAvatar(req, res) {
 
 export async function updateBanner(req, res) {
   try {
-    return res.status(200).json({ message: "Banner updated successfully" });
+    const file = req.file;
+    const userId = req.user._id
+    if(!file){
+        return res.status(400).json({message:"file not find"})
+    }
+    const user = await userModel.findById(userId);
+    if(!user){
+        return res.status(400).json({message:"user not find"})
+    }
+    const resulte = await cloudinary.uploader.upload(file.path)
+    fs.unlink(file.path)
+    user.banner = resulte.secure_url
+    await user.save();
+    return res.status(200).json({ message: "Banner updated successfully" , banner:user.banner});
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal server error" });

@@ -9,7 +9,7 @@ userRoute.get("/profile",  authMiddleware, userController.getUser);
 userRoute.patch("/profile", authMiddleware,  userController.updateUser);
 userRoute.patch("/avatar", authMiddleware, upload.single("avatar") , userController.updateAvatar);
 userRoute.delete("/avatar",authMiddleware, userController.deleteAvatar);
-userRoute.patch("/banner",authMiddleware, userController.updateBanner);
+userRoute.patch("/banner",authMiddleware,   upload.single('banner') , userController.updateBanner);
 userRoute.delete("/banner", authMiddleware,userController.deleteBanner);
 userRoute.patch("/deactivate",authMiddleware, userController.deactivateAccount);
 userRoute.delete("/delete-account",authMiddleware, userController.deleteAccount);
