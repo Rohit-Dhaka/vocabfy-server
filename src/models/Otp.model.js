@@ -20,6 +20,10 @@ const otpSchema = new mongoose.Schema({
         enum:['verify-email','forget-password'],
         default:'verify-email'
     },
+    verified:{
+        type:Boolean,
+        default:false
+    },
     expiredAt:{
         type:Date,
         default: ()=> new Date(Date.now() + 10 * 60 * 1000)

@@ -1,6 +1,6 @@
 import userModel from "../models/User.model.js";
 import bcrypt from 'bcrypt'
-import { getHtmlEmailVerify, getOtp } from "../utils/otp.utils.js";
+import { getHtmlEmailVerify, getHtmlForgetPasword, getOtp } from "../utils/otp.utils.js";
 import crypto  from 'crypto'
 import otpModel from "../models/Otp.model.js";
 import sendEmail from "../utils/email.utils.js";
@@ -221,6 +221,20 @@ export async function changePassword(req, res) {
 
 export async function sendForgotPasswordOtp(req, res) {
   try {
+    const {email}  = req.body;
+    if(!email){
+        return res.status(400).json({message:"email not defind"})
+    }
+    const user = await userModel.findOne({email});
+    if(!user){
+        return res.status(400).json({message:"user not find"})
+    }
+    const name = user.name;
+    const otp =  getOtp()
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex')
+    const html =  getHtmlForgetPasword(otp,name);
+    await sendEmail({email, subject:"Your Password Reset OTP" , text:`Your OTP is ${otp}`,html})
+    await otpModel.create({user:user._id, otpHash, email, type: "forget-password"})
     return res.status(200).json({message: "OTP sent successfully"});
   } catch (error) {
     console.log(error);
@@ -231,6 +245,7 @@ export async function sendForgotPasswordOtp(req, res) {
 
 export async function verifyForgotPasswordOtp(req, res) {
   try {
+    
     return res.status(200).json({message: "OTP verified successfully"});
   } catch (error) {
     console.log(error);
