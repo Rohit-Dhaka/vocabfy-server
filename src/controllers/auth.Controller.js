@@ -4,6 +4,9 @@ import { getHtmlEmailVerify, getOtp } from "../utils/otp.utils.js";
 import crypto  from 'crypto'
 import otpModel from "../models/Otp.model.js";
 import sendEmail from "../utils/email.utils.js";
+import jwt from 'jsonwebtoken'
+import env from '../config/env.js'
+import sessionModel from "../models/Session.model.js";
 
 
 export async function register(req, res) {
@@ -61,9 +64,45 @@ export async function login(req, res) {
   try {
     const {email, password} = req.body;
     if(!email || !password){
-        return res.status(400).json({message:"All "})
+        return res.status(400).json({message:"All filed are required"})
     }
-    return res.status(200).json({message: "User logged in successfully"});
+    
+    const user = await userModel.findOne({email});
+
+    if(!user){
+        return res.status(401).json({message:"Invalid email or password"})
+    }
+    if(!user.verified){
+        return res.status(401).json({message:"user not verified"})
+    }
+    const isPassword = await bcrypt.compare(password , user.password)
+    if(!isPassword){
+        return res.status(401).json({message:"Invalid email or password "})
+    }
+    const accessToken = jwt.sign(
+        {id:user.id},
+        env.SECRET_KEY,
+        {expiresIn:'15m'}
+    )
+    const refreshToken = jwt.sign(
+        {id:user._id},
+        env.SECRET_KEY,
+        {expiresIn:'7d'}
+    )
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+    await sessionModel.create({
+        user:user._id,
+        refreshTokenHash,
+        ip:req.ip,
+        userAgent:req.header('user-agent'),
+    })
+    res.cookie('refreshToken' , refreshToken,{
+        httpOnly:true,
+        sameSite:true,
+        secucr:true,
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+    return res.status(200).json({message: "User logged in successfully",user:{name:user.name,email:user.email} ,accessToken});
   } catch (error) {
     console.log(error);
     return res.status(500).json({error: "Internal server error"});
