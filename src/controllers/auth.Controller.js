@@ -263,6 +263,25 @@ export async function verifyForgotPasswordOtp(req, res) {
 
 export async function resetPassword(req, res) {
   try {
+     const { email, newPassword, confirmPassword } = req.body;
+
+    if (!email || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    if(newPassword !== confirmPassword){
+        return res.status(400).json({message:"New and Confirm Password not match"})
+    }
+    const user = await userModel.findOne({email});
+    if(!user){
+        return res.status(400).json({message:"user not find"})
+    }
+    const otpRecord  = await otpModel.findOne({email, verified:true});
+    if(!otpRecord){
+        return res.status(400).json({message:"otp is not verify"})
+    }
+    const passwordHash = await bcrypt.hash(newPassword , 10)
+    user.password = passwordHash
+    await user.save();
     return res.status(200).json({message: "Password reset successfully"});
   } catch (error) {
     console.log(error);
