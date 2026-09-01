@@ -80,7 +80,7 @@ export async function login(req, res) {
         return res.status(401).json({message:"Invalid email or password "})
     }
     const accessToken = jwt.sign(
-        {id:user.id},
+        {id:user._id},
         env.SECRET_KEY,
         {expiresIn:'15m'}
     )
@@ -99,7 +99,7 @@ export async function login(req, res) {
     res.cookie('refreshToken' , refreshToken,{
         httpOnly:true,
         sameSite:true,
-        secucr:true,
+        secure:true,
         maxAge: 7 * 24 * 60 * 60 * 1000
     })
     return res.status(200).json({message: "User logged in successfully",user:{name:user.name,email:user.email} ,accessToken});
@@ -110,14 +110,43 @@ export async function login(req, res) {
 }
 
 
-
-
 export async function refreshToken(req, res) {
   try {
-    return res.status(200).json({message: "Token refreshed successfully"});
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Refresh token not found" });
+    }
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+    const session = await sessionModel.findOne({refreshTokenHash})
+    if(!session){
+        return res.status(400).json({message:"session not find"})
+    }
+    const decode =  jwt.verify(refreshToken, env.SECRET_KEY)
+    const user = await userModel.findById(decode.id)
+    
+    const accessToken = jwt.sign(
+        {id:user._id},
+        env.SECRET_KEY,
+        {expiresIn:'15m'}
+    )
+     const newrefreshToken = jwt.sign(
+        {id:user._id},
+        env.SECRET_KEY,
+        {expiresIn:'15m'}
+    )
+    const newrefreshTokenHash = crypto.createHash('sha256').update(newrefreshToken).digest('hex')
+    session.refreshTokenHash = newrefreshTokenHash
+    await session.save();
+    res.cookie('refreshToken' , newrefreshToken,{
+        httpOnly:true,
+        sameSite:true,
+        secure:true,
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+    return res.status(200).json({message: "Token refreshed successfully" , accessToken});
   } catch (error) {
     console.log(error);
-    return res.status(500).json({error: "Internal server error"});
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 
