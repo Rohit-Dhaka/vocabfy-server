@@ -67,7 +67,7 @@ export async function login(req, res) {
         return res.status(400).json({message:"All filed are required"})
     }
     
-    const user = await userModel.findOne({email});
+    const user = await userModel.findOne({email}).select('+password');
 
     if(!user){
         return res.status(401).json({message:"Invalid email or password"})
@@ -82,7 +82,7 @@ export async function login(req, res) {
     const accessToken = jwt.sign(
         {id:user._id},
         env.SECRET_KEY,
-        {expiresIn:'15m'}
+        {expiresIn:'7d'}
     )
     const refreshToken = jwt.sign(
         {id:user._id},
