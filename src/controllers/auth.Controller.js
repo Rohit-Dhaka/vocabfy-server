@@ -194,6 +194,24 @@ export async function logoutAll(req, res) {
 
 export async function changePassword(req, res) {
   try {
+    const user = req.user; 
+    if(!user){
+        return res.status(400).json({message:"user not find"})
+    }
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    if(!currentPassword || !newPassword || !confirmPassword){
+        return res.status(400).json({message:"All filed are required"})
+    }
+    const machPassword = await bcrypt.compare(currentPassword, user.password)
+    if(!machPassword){
+        return res.status(401).json({message:"Current Password is wrong"})
+    }
+    if(newPassword  !== confirmPassword){
+        return res.status(400).json({message:"New and Comfirm password not match"})
+    }
+    const hashedPassword = await bcrypt.hash(newPassword , 10)
+    user.password = hashedPassword;
+    await user.save();    
     return res.status(200).json({message: "Password changed successfully"});
   } catch (error) {
     console.log(error);
