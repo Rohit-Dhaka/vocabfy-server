@@ -4,7 +4,11 @@ import userModel from "../models/User.model.js";
 
 export async function getUser(req, res) {
   try {
-    return res.status(200).json({ message: "User profile fetched successfully" });
+    const user = req.user;
+    if(!user){
+        return res.status(400).json({message:"User not find"})
+    }
+    return res.status(200).json({ message: "User profile fetched successfully"  ,user});
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal server error" });
