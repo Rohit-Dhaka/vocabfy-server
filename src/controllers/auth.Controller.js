@@ -162,9 +162,10 @@ export async function logout(req, res) {
     if(!session){
         return res.status(400).json({message:"session not find"})
     }
+    console.log("session",session)
     session.revoked = true
-    await session.save();
-    res.clearCookie('refreshToken')    
+    await session.save();        
+    res.clearCookie('refreshToken')        
     return res.status(200).json({message: "User logged out successfully"});
   } catch (error) {
     console.log(error);
@@ -175,6 +176,14 @@ export async function logout(req, res) {
 
 export async function logoutAll(req, res) {
   try {
+    const refreshToken = req.cookies.refreshToken;
+    if(!refreshToken){
+        return res.status(400).json({message:"refresh token not find"})
+    }
+    const decode = jwt.verify(refreshToken, env.SECRET_KEY)
+    const user = await userModel.findById(decode.id)    
+    await sessionModel.deleteMany(user.user)
+    res.clearCookie('refreshToken')
     return res.status(200).json({message: "User logged out from all devices successfully"});
   } catch (error) {
     console.log(error);
