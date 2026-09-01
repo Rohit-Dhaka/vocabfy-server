@@ -153,6 +153,18 @@ export async function refreshToken(req, res) {
 
 export async function logout(req, res) {
   try {
+    const refreshToken = req.cookies.refreshToken;
+    if(!refreshToken){
+        return res.status(400).json({message:"refresh token not find"})
+    }
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+    const session = await sessionModel.findOne({refreshTokenHash});
+    if(!session){
+        return res.status(400).json({message:"session not find"})
+    }
+    session.revoked = true
+    await session.save();
+    res.clearCookie('refreshToken')    
     return res.status(200).json({message: "User logged out successfully"});
   } catch (error) {
     console.log(error);
