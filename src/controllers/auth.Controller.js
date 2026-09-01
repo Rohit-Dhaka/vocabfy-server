@@ -31,8 +31,38 @@ export async function register(req, res) {
 }
 
 
+export async function verifyEmail(req, res) {
+  try {
+    const {otp ,email} = req.body;
+    if(!otp || !email){
+        return res.status(400).json({message:"All fields are required"})
+    }
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    const otpRecord = await otpModel.findOne({email ,otpHash});
+    if(!otpRecord){
+        return res.status(400).json({message:"user not find"})
+    }
+    const user = await userModel.findById(otpRecord.user)
+     if(!user){
+        return res.status(400).json({message:"user not find"})
+    }
+    user.verified = true
+    await user.save();
+    await otpModel.deleteOne(otpRecord._id)
+    return res.status(200).json({message: "Email verified successfully"});
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({error: "Internal server error"});
+  }
+}
+
+
 export async function login(req, res) {
   try {
+    const {email, password} = req.body;
+    if(!email || !password){
+        return res.status(400).json({message:"All "})
+    }
     return res.status(200).json({message: "User logged in successfully"});
   } catch (error) {
     console.log(error);
@@ -40,14 +70,7 @@ export async function login(req, res) {
   }
 }
 
-export async function verifyEmail(req, res) {
-  try {
-    return res.status(200).json({message: "Email verified successfully"});
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({error: "Internal server error"});
-  }
-}
+
 
 
 export async function refreshToken(req, res) {
