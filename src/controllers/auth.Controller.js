@@ -245,7 +245,14 @@ export async function sendForgotPasswordOtp(req, res) {
 
 export async function verifyForgotPasswordOtp(req, res) {
   try {
-    
+    const {otp , email} = req.body;
+    if(!otp || !email){
+        return res.status(400).json({message:"All filed are required"})
+    }
+    const otpHash = crypto.createHash('sha256').update(otp).digest("hex");
+    const otpRecord = await otpModel.findOne({otpHash , email ,  type: "forget-password"});    
+    otpRecord.verified = true;
+    await otpRecord.save();
     return res.status(200).json({message: "OTP verified successfully"});
   } catch (error) {
     console.log(error);
