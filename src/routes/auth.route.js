@@ -8,8 +8,8 @@ const authRoute = Router();
 
 authRoute.post("/register", authRateLimiter, authController.register);
 authRoute.post("/verify-email", authRateLimiter, authController.verifyEmail);
-authRoute.post("/login", passwordRateLimiter, authController.login);
-authRoute.post("/refresh-token", authRateLimiter, authController.refreshToken);
+authRoute.post("/login",  authController.login);
+authRoute.post("/refresh-token", authController.refreshToken);
 authRoute.post("/logout", authRateLimiter, authController.logout);
 authRoute.post("/logout-all",authRateLimiter,authMiddleware,authController.logoutAll);
 authRoute.post("/change-password",passwordRateLimiter,authMiddleware,authController.changePassword);
@@ -18,3 +18,6 @@ authRoute.post( "/forgot-password/verify-otp", passwordRateLimiter, authControll
 authRoute.post( "/forgot-password/reset-password", passwordRateLimiter, authController.resetPassword);
 
 export default authRoute;
+
+// passwordRateLimiter add karn hai 
+// authRateLimiter

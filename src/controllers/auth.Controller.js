@@ -132,7 +132,7 @@ export async function refreshToken(req, res) {
      const newrefreshToken = jwt.sign(
         {id:user._id},
         env.SECRET_KEY,
-        {expiresIn:'15m'}
+        {expiresIn:'7d'}
     )
     const newrefreshTokenHash = crypto.createHash('sha256').update(newrefreshToken).digest('hex')
     session.refreshTokenHash = newrefreshTokenHash
