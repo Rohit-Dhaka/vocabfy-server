@@ -8,7 +8,22 @@ const app = express()
 
 
 app.use(express.json())
-app.use(cors({origin:"https://vocabfy-beta.vercel.app" , credentials:true}))
+// app.use(cors({origin:"https://vocabfy-beta.vercel.app" , credentials:true}))
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://vocabfy-beta.vercel.app"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 app.use(cookieParser())
 
 app.get("/health", (req, res) => {
